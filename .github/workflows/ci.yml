@@ -29,6 +29,8 @@ jobs:
           export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
           export DB_NAME="${{ secrets.DB_NAME }}"
           docker compose up -d
+          sleep 5
+          docker compose logs db
 
       # 4️⃣ Wait for Postgres to be ready
       - name: Wait for Postgres to be ready
