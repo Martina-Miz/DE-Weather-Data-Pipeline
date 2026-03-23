@@ -21,37 +21,45 @@ jobs:
     env:
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HOST: db       # matches service key
+      DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
-      # 1️⃣ Checkout code
       - uses: actions/checkout@v3
 
-      # 2️⃣ Setup Python
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # 3️⃣ Install dependencies
-      - run: pip install -r requirements.txt && pip install psycopg2-binary
-
-      # 4️⃣ Wait for Postgres and test connection
-      - name: Wait for Postgres and test DB connection
+      - name: Install dependencies
         run: |
-          for i in {1..15}; do
-            if pg_isready -h db -p 5432 -U "$DB_USER"; then
-              echo "✅ DB is ready"
-              exit 0
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+
+      - name: Debug container state
+        run: |
+          echo "=== docker ps -a ==="
+          docker ps -a
+          echo "=== docker logs for postgres service ==="
+          docker logs $(docker ps -q --filter ancestor=postgres:15 || true)
+
+      - name: Wait for Postgres service
+        run: |
+          for i in $(seq 1 30); do
+            echo "⏳ postgres waiting ($i/30)"
+            if PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c '\q' >/dev/null 2>&1; then
+              echo "✅ postgres ready"
+              break
             fi
-            echo "⏳ Waiting for DB... ($i/15)"
             sleep 2
           done
-          echo "❌ DB failed to start"
-          exit 1
-        env:
-          PGPASSWORD: ${{ env.DB_PASSWORD }}
+          if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c '\q' >/dev/null 2>&1; then
+            echo "❌ postgres never became ready"
+            docker ps -a
+            docker logs $(docker ps -q --filter ancestor=postgres:15 || true)
+            exit 1
+          fi
 
-      # 5️⃣ Run your app
-      - run: python app/main.py
+      - name: Run pipeline
+        run: python app/main.py
