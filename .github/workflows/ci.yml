@@ -41,7 +41,7 @@ jobs:
       - name: Wait for Postgres and test DB connection
         run: |
           for i in {1..15}; do
-            if pg_isready -h db -p 5432 -U ${{ env.DB_USER }}; then
+            if pg_isready -h db -p 5432 -U "$DB_USER"; then
               echo "✅ DB is ready"
               exit 0
             fi
