@@ -10,11 +10,23 @@ jobs:
 
     steps:
       # 1️⃣ Repository checkout
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # 2️⃣ Create .env file with secrets
       - name: Create .env file
         run: |
+          if [ -z "${{ secrets.DB_USER }}" ]; then
+            echo "Error: DB_USER secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+            echo "Error: DB_PASSWORD secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DB_NAME }}" ]; then
+            echo "Error: DB_NAME secret is not set"
+            exit 1
+          fi
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_HOST=db" >> .env
