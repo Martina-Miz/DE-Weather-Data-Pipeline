@@ -25,6 +25,10 @@ jobs:
 
       # 3️⃣ Start Docker Compose (application + database)
       - name: Start services with Docker Compose
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
         run: docker compose up -d
 
       # 4️⃣ Wait for Postgres to be ready
