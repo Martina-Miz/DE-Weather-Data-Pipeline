@@ -15,21 +15,20 @@ jobs:
       # 2️⃣ Create .env file with secrets
       - name: Create .env file
         run: |
-          cat > .env << EOF
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=db
-          DB_PORT=5432
-          DB_NAME=${{ secrets.DB_NAME }}
-          EOF
+          echo "DB_USER=${{ secrets.DB_USER }}" > .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_HOST=db" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          cat .env
 
       # 3️⃣ Start Docker Compose (application + database)
       - name: Start services with Docker Compose
-        env:
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: docker compose up -d
+        run: |
+          export DB_USER="${{ secrets.DB_USER }}"
+          export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+          export DB_NAME="${{ secrets.DB_NAME }}"
+          docker compose up -d
 
       # 4️⃣ Wait for Postgres to be ready
       - name: Wait for Postgres to be ready
